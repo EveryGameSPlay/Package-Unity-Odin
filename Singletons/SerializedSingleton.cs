@@ -20,8 +20,7 @@ namespace Egsp.Core
 
                     if (_instance == null)
                     {
-                        CreateInstanceSafely();
-                        CallOnInstanceCreated();
+                        CreateInstance();
                     }
                     else
                     {
@@ -70,13 +69,16 @@ namespace Egsp.Core
         private static TSingleton _instance;
         private static GameObject _instanceGameObject;
 
+        public static WeakEvent<TSingleton> OnInstanceCreated = new WeakEvent<TSingleton>();
+
 
         /// <param name="immediate">Уничтожить мгновенно, а не в конце кадра.</param>
         public static void DestroyIfExist(bool immediate = false)
         {
             if (_instance != null)
             {
-                _instance = null;
+                // Данная операция срабатывает в OnDestroy.
+                // _instance = null;
                 
                 if (_instanceGameObject == null)
                     return;
@@ -107,8 +109,6 @@ namespace Egsp.Core
             }
             
             CreateInstanceSafely();
-            
-            CallOnInstanceCreated();
 
             return _instance;
         }
@@ -136,26 +136,12 @@ namespace Egsp.Core
                 typeof(TSingleton));
         }
 
-        /// <summary>
-        /// Вызывает метод-событие уведомлящий экземпляр о появлении.
-        /// Вызывается после Awake.
-        /// </summary>
-        private static void CallOnInstanceCreated()
-        {
-            var singletone = _instance as SerializedSingleton<TSingleton>;
-            if (singletone != null)
-            {
-                singletone.OnInstanceCreated();
-            }
-        }
-
         protected virtual void Awake()
         {
             // Если на сцене уже существует экземпляр, то текущий нужно уничтожить.
             if (_instance != null)
             {
                 DestroyImmediate(gameObject);
-                return;
             }
             // Этот блок кода обрабатывает ситуацию, когда объект не создается из вне, а существует при старте сцены.
             // Также он сработает при вызове CreateInstance и сам назначит значения.
@@ -163,14 +149,24 @@ namespace Egsp.Core
             {
                 _instance = this as TSingleton;
                 _instanceGameObject = gameObject;
+                OnInstanceCreatedInternal();
             }
         }
         
         /// <summary>
         /// Вызывается при создании экземпляра.
         /// </summary>
-        protected virtual void OnInstanceCreated()
+        protected virtual void OnInstanceCreatedInternal()
         {
-        } 
+            OnInstanceCreated.Raise(_instance);
+        }
+
+        protected virtual void OnDestroy()
+        {
+            _instance = null;
+            _instanceGameObject = null;
+            // Нужно очистить значение, т.к. новые подписчики будут получать ссылку на старый инстанс.
+            OnInstanceCreated.ClearCachedValue();
+        }
     }
 }

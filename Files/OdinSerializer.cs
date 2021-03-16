@@ -1,4 +1,5 @@
-﻿using Sirenix.Serialization;
+﻿using Egsp.Core;
+using Sirenix.Serialization;
 
 namespace Egsp.Files.Serializers
 {
@@ -13,7 +14,7 @@ namespace Egsp.Files.Serializers
             return serializationData;
         }
 
-        public T Deserialize<T>(byte[] serializedData)
+        public Option<T> Deserialize<T>(byte[] serializedData)
         {
             var obj = SerializationUtility.DeserializeValue<T>(serializedData, DataFormat.JSON);
             return obj;
