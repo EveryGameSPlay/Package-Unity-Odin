@@ -2,7 +2,6 @@
 using System.Linq;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
-using UnityEngine;
 
 namespace Egsp.Extensions.Graphs
 {
